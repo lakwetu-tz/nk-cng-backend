@@ -71,8 +71,8 @@ export const handleImageUpload = async (req: Request, res: Response) => {
         }
 
         // Update the form with image paths
-        form.front_id_image = files.frontId[0].path;
-        form.back_id_image = files.backId[0].path;
+        form.id_front_face = files.frontId[0].path;
+        form.id_back_face = files.backId[0].path;
         await form.save();
 
         res.status(200).json({ status: "Ok", message: 'Images Uploaded Successfully' });
@@ -224,22 +224,26 @@ export const updateLoanType = async (req: Request, res: Response) => {
 
 export const acceptLoanTerms = async (req: Request, res: Response) => {
     const { accepted, userId } = req.body;
+    console.log(accepted, userId)
 
     try {
         // check for miss request
         if (!userId || !accepted) {
+            console.log("Missing required fields");
             return res.status(400).json({ status: "Error", message: "Missing required fields" });
         }
 
         // check if the user exist
         const user = await User.findById(userId);
         if(!user){
+            console.log("User not found");
             return res.status(404).json({ status: "Error", message: "User not found" });
         }
 
         // check if user has a form id
         const checkForm = await Form.findOne({ User: userId });
         if (checkForm) {
+            console.log("User has form");
             return res.status(202).json({ status: "Ok", formId: `${checkForm._id}`, message: 'User has form' });
         }
 
@@ -247,6 +251,10 @@ export const acceptLoanTerms = async (req: Request, res: Response) => {
             agreed_terms: accepted,
             User: userId,
         });
+
+        if(newForm){
+            console.log("Form created");
+        }
 
         const saved = await newForm.save();
 

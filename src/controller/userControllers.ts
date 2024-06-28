@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel from '../model/userModel';
 import { JWT_SECRET } from '../utils/jwtUtils';
+import { generatePassword } from '../utils/generatePassword';
 import AfricasTalking from 'africastalking';
 
 
@@ -18,7 +19,7 @@ const generateOTP = () => {
     return Math.floor(10000 + Math.random() * 90000).toString();
 };
 
-const sendOTP = async ( phone: string, otp: string) => {
+const sendOTP = async (phone: string, otp: string) => {
     const message = `Your verification code is ${otp}`;
     try {
         const response = await sms.send({
@@ -29,7 +30,7 @@ const sendOTP = async ( phone: string, otp: string) => {
         console.log(response);
     } catch (error) {
         console.error('Error sending OTP:', error);
-    throw error;
+        throw error;
     }
 };
 
@@ -46,8 +47,8 @@ export const register = async (req: Request, res: Response) => {
         }
 
         const existingPhone = await userModel.findOne({ phone })
-        if (existingPhone){
-            return res.status(401).json({ message: "Phone Number already taken"})
+        if (existingPhone) {
+            return res.status(401).json({ message: "Phone Number already taken" })
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -175,20 +176,20 @@ export const getUsers = async (req: Request, res: Response) => {
         const users = await userModel.find()
 
         res.status(200).json({ users })
-    }catch (error){
+    } catch (error) {
         console.error(error)
-        res.status(500).json({ message: "Internal server error!"})
+        res.status(500).json({ message: "Internal server error!" })
     }
 }
 
-export const handleProfileImageUpload  = async (req: Request, res: Response) => {
+export const handleProfileImageUpload = async (req: Request, res: Response) => {
     try {
         const userId = req.params.userId;
         const imageUrl = req.body.imageUrl;
 
         // check if user exist 
         const user = userModel.findById(userId);
-        if(!user){
+        if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
@@ -197,7 +198,44 @@ export const handleProfileImageUpload  = async (req: Request, res: Response) => 
         // await user.save();
 
     } catch (error) {
-         console.error(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+export const handleResetPassword = async (req: Request, res: Response) => {
+    const { phone } = req.body;
+    try {
+
+        // Validate phone number format here if needed
+        if (!phone) {
+            return res.status(400).json({ status: 'error', message: 'Phone number is required' });
+        }
+
+        // Find the user by phone number
+        const user = await userModel.findOne({ phone });
+        if (!user) {
+            return res.status(404).json({ status: 'error', message: 'User not found' });
+        }
+
+        // Generate a new password
+        const newPassword = generatePassword();
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        // Send the new password via SMS
+        const result = await sms.send({
+            to: [phone],
+            message: `Your new password is ${newPassword}`,
+            from: ''
+        });
+        res.status(200).json({ status:'Ok', message: 'Password reset successfully', result });
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+
+};

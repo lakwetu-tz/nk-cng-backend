@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 const GuarantorSchema: Schema = new Schema({
-    User: {
+    Form: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Form',
         required: false
     },
     // personal data
@@ -26,6 +26,33 @@ const GuarantorSchema: Schema = new Schema({
         type: String,
         required: false,
         trim: true,
+    },
+    address: {
+        ward: {
+            type: String,
+            required: false,
+            trim: true,
+        },
+        city: {
+            type: String,
+            required: false,
+            trim: true,
+        },
+        postal_code: {
+            type: String,
+            required: false,
+            trim: true
+        },
+    },
+    national_id: {
+        type: String,
+        require: false,
+        trim: true
+    },
+    relationship: {
+        type: String,
+        required: false,
+        trim: true
     },
     barua: {
         type: String,

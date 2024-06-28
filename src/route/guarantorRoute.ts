@@ -9,7 +9,7 @@ router.post('/guarantors', upload.fields([
     { name: 'letterFile', maxCount: 1 }
 ]), createGuarantor);
 
-router.get('/guarantors', getGuarantors);
+// router.get('/guarantors', getGuarantors);
 router.get('/guarantors/:id', getGuarantorById);
 router.put('/guarantors/:id', updateGuarantor);
 router.delete('/guarantors/:id', deleteGuarantor);

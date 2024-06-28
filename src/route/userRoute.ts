@@ -1,5 +1,5 @@
 import express from 'express';
-import {register, login, getUsers, verify, resendOtp} from '../controller/userControllers';
+import {register, login, getUsers, verify, resendOtp, handleResetPassword} from '../controller/userControllers';
 import authenticate from '../middlewares/authenticate';
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.get('/logout', authenticate, (req, res) => {
     res.json({ message: 'Logged out successfully' });
 });
 router.get('/users', getUsers);
+router.post('/reset-password', handleResetPassword)
 
 export default router;

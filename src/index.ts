@@ -68,7 +68,7 @@ mongoose.connect(process.env.MONGO_URI || "", {
     serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
 })
     .then(() => {
-        app.listen(4000, "0.0.0.0", () => {
+        app.listen(4000, () => {
             
             console.log(`Server running on port ${port}`);
         });

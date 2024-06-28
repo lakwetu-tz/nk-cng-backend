@@ -49,11 +49,6 @@ const FormSchema: Schema = new Schema({
             trim: true
         },
     },
-    Guarantor_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Guarantor',
-        required: false
-    },
     vehicle_id: {
         type: Schema.Types.ObjectId,
         ref: 'Vehicle',
