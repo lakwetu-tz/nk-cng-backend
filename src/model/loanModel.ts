@@ -1,14 +1,19 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 const LoanSchema: Schema = new Schema({
-    form: {
-        type: Schema.Types.ObjectId,
-        ref: 'Form',
-        required: false
-    },
     name: {
         type: String,
         required: true
+    },
+    description: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    image: {
+        type: String,
+        required: false,
+        trim: true
     },
     loan_reference: { //auto generate
         type: Number,
@@ -25,27 +30,30 @@ const LoanSchema: Schema = new Schema({
         default: 0,
         dec: "The total loan the user is applying for"
     },
-    total_loan_balance: {
-        type: String,
-        required: false,
-        desc: "The total loan balance"
-    },
-    initial_loan_amount: {
+    down_payment: {
         type: Boolean,
         default: false,
         desc: "The initial amount the user is required to pay"
     },
-    loan_expire_date: {
-        type: Date,
-        default: new Date(),
-        desc: "The duration of the loan in months"
+    weekly_payment: {
+        type: Number,
+        required: false,
+        default: 0,
+        desc: "The weekly payment the user is required to pay"
     },
+    allowed_engine_cc: {
+        type: String,
+        required: false,
+        default: 0,
+        desc: "The allowed engine cc for the loan"
+    }
+
 
 },
 
-{
-    timestamps: true,
-    versionKey: false
-});
+    {
+        timestamps: true,
+        versionKey: false
+    });
 
 export default mongoose.model('Loan', LoanSchema);

@@ -1,4 +1,7 @@
-export const generatePassword = (length: number = 12): string => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generatePassword = void 0;
+const generatePassword = (length = 12) => {
     const charset = 'QWERTYUIOASDFGHJKLZXCVBNM123456789';
     let password = '';
     for (let i = 0, n = charset.length; i < length; ++i) {
@@ -6,3 +9,4 @@ export const generatePassword = (length: number = 12): string => {
     }
     return password;
 };
+exports.generatePassword = generatePassword;

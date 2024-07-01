@@ -1,49 +1,32 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import guarantorModel from '../model/guarantorModel';
-import multer, { StorageEngine } from 'multer';
+import guarantorModel from '../model/guarantorModel'; // Import GuarantorDocument if defined
 import formModel from '../model/formModel';
 
-// Configure multer storage
-const storage: StorageEngine = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
+// Interface for guarantor data expected in the request body
+interface GuarantorRequestBody {
+    formId: string;
+    guarantors: {
+        firstName: string;
+        lastName: string;
+        phone: string;
+        email: string;
+        address?: {
+            ward?: string;
+            city?: string;
+            postalCode?: string;
+        };
+    }[];
+}
 
-// Multer middleware
-export const upload = multer({ storage });
-
-// Create a new guarantor
-export const createGuarantor = async (req: Request, res: Response) => {
-    // {
-    //     "formId": "3nn09no2390nc03023",
-    //     "guarantors": [
-    //         {
-    //             "firstName": "John",
-    //             "lastName": "Doe",
-    //             "email": "john.doe@example.com",
-    //             "phone": "1234567890"
-    //         },
-    //         {
-    //             "firstName": "Jane",
-    //             "lastName": "Smith",
-    //             "email": "jane.smith@example.com",
-    //             "phone": "9876543210"
-    //         },
-    //         {
-    //             "firstName": "Jane",
-    //             "lastName": "Smith",
-    //             "email": "jane.smith@example.com",
-    //             "phone": "9876543210"
-    //         }
-    //     ]
-    // }
+// Create or update guarantors
+export const createOrUpdateGuarantors = async (req: Request, res: Response) => {
     try {
-        const { formId, guarantors } = req.body;
+        const { formId, guarantors }: GuarantorRequestBody = req.body;
+
+        if (!formId || !guarantors.length) {
+            return res.status(400).json({ message: 'Invalid request body' });
+        }
 
         // Find the form by ID
         const form = await formModel.findById(formId);
@@ -51,113 +34,78 @@ export const createGuarantor = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Form not found' });
         }
 
-        // Validate that the form is not submitted
-        if (form.isSubmitted) {
-            return res.status(400).json({ message: 'Form is already submitted' });
+        // Check for a maximum of 3 guarantors
+        if (guarantors.length > 3) {
+            return res.status(400).json({ message: 'Maximum of 3 guarantors allowed' });
         }
+        const existingGuarantor = await guarantorModel.findOne({ form: formId });
 
-        // Validate that the form has not reached the maximum number of guarantors (3)
-        if (guarantors.length >= 3) {
-            return res.status(400).json({ message: 'Maximum number of guarantors reached' });
-        }
+        // Create or update guarantors
+    //     
 
-        // Save guaranter information on the guarantorModel
-        const newGuarantors = guarantors.map((guarantor: any) => {
-            const { firstName, lastName, email, phone } = guarantor;
-            return new guarantorModel({
-                Form: formId,
-                first_name: firstName,
-                last_name: lastName,
-                email,
-                phone,
-            });
-        });
-
-        // Save the new guarantors to the database
-        const savedGuarantors = await guarantorModel.insertMany(newGuarantors);
-
-        // Update the form's guarantors array with the new guarantor IDs
-        guarantors.push(...savedGuarantors.map(guarantor => guarantor._id));
-        await form.save();
-
-        res.status(201).json({ status: "Ok", message: "Form Submitted", data: savedGuarantors });
+        res.status(200).json({ message: 'Guarantors updated successfully' });
     } catch (error) {
-        console.error('Error creating guarantor:', error);
+        console.error('Error creating or updating guarantors:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 
-// export const uploads = async (req: Request, res: Response) => {
-//     // {
-//     //     "formId": "3nn09no2390nc03023",
-//     //     "uploads": [
-//     //         {
-//     //             "nationalIdFront": "path/to/front_national_id.jpg",
-//     //             "nationalIdBack": "path/to/back_national_id.jpg",
-//     //             "letterFile": "path/to/letter.pdf",
-//     //            
-//     //         },
-//     //         {
-//     //             "nationalIdFront": "path/to/front_national_id.jpg",
-//     //             "nationalIdBack": "path/to/back_national_id.jpg",
-//     //             "letterFile": "path/to/letter.pdf",
-//     //       
-//     //         },
-//     //         {
-//     //             "nationalIdFront": "path/to/front_national_id.jpg",
-//     //             "nationalIdBack": "path/to/back_national_id.jpg",
-//     //             "letterFile": "path/to/letter.pdf",
-//     //          
-//     //         }
-//     //     ]
-//     // }
-//     try {
-//         const { formId, uploads } = req.body;
+export const handleUploads = async (req: Request, res: Response) => {
 
-//         // Find the form by ID
-//         const form = await formModel.findById(formId);
-//         if (!form) {
-//             return res.status(404).json({ message: 'Form not found' });
-//         }
-     
-//         // Validate that the form has not reached the maximum number of guarantors (3)
-//         if (uploads.length >= 3) {
-//             return res.status(400).json({ message: 'Maximum number of guarantors reached' });
-//         }
-//         // Get the uploaded files from the request
-//         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-//         // Validate file existence for each guarantor
-//         const hasAllFiles = guarantors.every((guarantor: any, index: number) => {
-//             return (
-//                 files[`nationalIdFront_${index}`] &&
-//                 files[`nationalIdBack_${index}`] &&
-//                 files[`letterFile_${index}`]
-//             );
-//         });
-//         if (!hasAllFiles) {
-//             return res.status(400).json({ message: 'Missing required files' });
-//         }
-//         // Prepare an array to hold the new guarantor documents
-//         const uploadGuarantor = guarantors.map((guarantor: any, index: number) => {
-//             const { nationalIdFrontPath,  } = guarantor;
-//             return new guarantorModel({
-//                 nationalIdFrontPath: files[`nationalIdFront_${index}`][0].path,
-//                 nationalIdBackPath: files[`nationalIdBack_${index}`][0].path,
-//                 letterFilePath: files[`letterFile_${index}`][0].path,
-//             });
-//         });
-//         // Save all guarantor documents to the database
-//         const savedGuarantors = await guarantorModel.insertMany(newGuarantors);
-//         // Update the form's guarantors array with the new guarantor IDs
-//         form.guarantors.push(...savedGuarantors.map(guarantor => guarantor._id));
-//         await form.save();
-//         res.status(201).json({ status: "Ok", message: "Form Submitted", data: savedGuarantors });
-//     } catch (error) {
-//         console.error('Error creating guarantor:', error);
-//         res.status(500).json({ message: 'Internal server error' });
-//     }
-// };
+    // {
+    //     "formId": "667fb0c48ac9fd25a97c9e11",
+    //     "uploads": [
+    //         {
+    //             "nationalIdFront": "path/to/Jack_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/Jack_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/Jack_letter.jpeg",
+    //         },
+    //         {
+    //             "nationalIdFront": "path/to/John_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/John_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/John_letter.jpeg",
+    //         },
+    //         {
+    //             "nationalIdFront": "path/to/Enock_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/Enock_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/Enock_letter.jpeg",
+    //         }
+    //     ]
+    // }
+    try {
+        const { formId, uploads }: { formId: string, uploads: { nationalIdFront: string, nationalIdBack: string, letterPdf: string }[] } = req.body;
 
+        const form = await guarantorModel.findOne({ form: formId });
+        if (!form) {
+            return res.status(404).json({ message: "Form not found!" });
+        }
+
+        // make sure we have the same number of uploads as guarantors
+        const guarantors = await form.guarantors;
+        if (guarantors.length!== req.body.uploads.length) {
+            return res.status(400).json({ message: 'Number of uploads does not match number of guarantors' });
+        }
+
+        // handle the reset of logic to update files on each guarantors
+        // Update each guarantor with the respective file paths
+        // form.guarantors = form.guarantors.map((guarantor, index) => ({
+        //     ...guarantor,
+        //     files: {
+        //         national_id_front: uploads[index].nationalIdFront,
+        //         national_id_back: uploads[index].nationalIdBack,
+        //         letter_pdf: uploads[index].letterPdf,
+        //     }
+        // }));
+
+        await form.save();
+
+        res.status(200).json({ status: "Ok", message: 'Uploads successfully saved',  });
+
+    }catch(error) {
+        console.error('Error handling uploads:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 
 // Get all guarantors
@@ -218,7 +166,7 @@ export const deleteGuarantor = async (req: Request, res: Response) => {
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ message: 'Invalid ID' });
-        }
+        } 
 
         const guarantor = await guarantorModel.findByIdAndDelete(id);
         if (!guarantor) {
@@ -227,7 +175,35 @@ export const deleteGuarantor = async (req: Request, res: Response) => {
 
         res.status(200).json({ message: 'Guarantor deleted successfully' });
     } catch (error) {
-        console.error('Error deleting guarantor:', error);
+        console.error('Error deleting guarantor:', error);  
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+// handle delete multiple guarantors
+
+export const deleteManyGuarantors = async (req: Request, res: Response) => {
+    try {
+        const { ids } = req.body;
+        if (!ids) {
+            return res.status(400).json({ message: 'Invalid ID' });
+        }
+        const guarantors = await guarantorModel.deleteMany({ _id: { $in: ids } });
+        res.status(200).json({ message: 'Guarantors deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting guarantors:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// handle delete all guarantors
+export const deleteAllGuarantors = async (req: Request, res: Response) => {
+    try {
+        const guarantors = await guarantorModel.deleteMany({});
+        res.status(200).json({ message: 'Guarantors deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting guarantors:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+

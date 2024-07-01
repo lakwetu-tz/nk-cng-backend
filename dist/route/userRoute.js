@@ -16,4 +16,7 @@ router.get('/logout', authenticate_1.default, (req, res) => {
     res.json({ message: 'Logged out successfully' });
 });
 router.get('/users', userControllers_1.getUsers);
+router.post('/reset-password', userControllers_1.handleResetPassword);
+router.delete('/delete/:id', userControllers_1.deleteUser);
+router.put('/update/:id', userControllers_1.updateUser);
 exports.default = router;

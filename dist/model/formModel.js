@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const FormSchema = new mongoose_1.Schema({
-    user_id: {
+    User: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: false
@@ -54,7 +54,6 @@ const FormSchema = new mongoose_1.Schema({
     national_id: {
         type: String,
         require: false,
-        unique: true,
         trim: true
     },
     address: {
@@ -74,11 +73,6 @@ const FormSchema = new mongoose_1.Schema({
             trim: true
         },
     },
-    Guarantor_id: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Guarantor',
-        required: false
-    },
     vehicle_id: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Vehicle',
@@ -93,11 +87,26 @@ const FormSchema = new mongoose_1.Schema({
         type: String,
         require: false,
     },
+    status: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    validated: {
+        type: Boolean,
+        default: false
+    },
     id_front_face: {
         type: String,
+        required: false
     },
     id_back_face: {
         type: String,
+        required: false
+    },
+    agreed_terms: {
+        type: Boolean,
+        default: false
     },
     created_at: {
         type: Date,

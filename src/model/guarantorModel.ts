@@ -1,83 +1,33 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose from 'mongoose';
 
-const GuarantorSchema: Schema = new Schema({
-    Form: {
-        type: Schema.Types.ObjectId,
+const guarantorSchema = new mongoose.Schema({
+    form: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Form',
-        required: false
-    },
-    // personal data
-    first_name: {
-        type: String,
         required: false,
-        trim: true,
     },
-    last_name: {
-        type: String,
-        required: false,
-        trim: true,
-    },
-    phone: {
-        type: String,
-        required: false,
-        trim: true,
-    },
-    email: {
-        type: String,
-        required: false,
-        trim: true,
-    },
-    address: {
-        ward: {
-            type: String,
-            required: false,
-            trim: true,
+    guarantors: [
+        {
+            first_name: { type: String, trim: true, required: false },
+            last_name: { type: String, trim: true, required: false },
+            phone: { type: String, trim: true, required: false },
+            email: { type: String, trim: true, required: false },
+            address: {
+                ward: { type: String, trim: true, required: false },
+                city: { type: String, trim: true, required: false },
+                postalCode: { type: String, trim: true, required: false },
+            },
+            files: 
+                {
+                    national_id_front: { type: String, trim: true, required: false },
+                    national_id_back: { type: String, trim: true, required: false },
+                    letter_pdf: { type: String, required: false },
+                },
+           
         },
-        city: {
-            type: String,
-            required: false,
-            trim: true,
-        },
-        postal_code: {
-            type: String,
-            required: false,
-            trim: true
-        },
-    },
-    national_id: {
-        type: String,
-        require: false,
-        trim: true
-    },
-    relationship: {
-        type: String,
-        required: false,
-        trim: true
-    },
-    barua: {
-        type: String,
-        require: false
-    },
+    ],
+    createdAt: { type: Date, default: () => new Date() },
+    updatedAt: { type: Date, default: () => new Date() },
+});
 
-    id_front_face: {
-        type: String,
-        required: false
-
-    },
-    id_back_face: {
-        type: String,
-        require: false,
-
-    },
-
-    created_at: {
-        type: Date,
-        default: Date.now
-    },
-    updated_at: {
-        type: Date,
-        default: Date.now
-    }
-})
-
-export default mongoose.model('Guarantor', GuarantorSchema)
+export default mongoose.model('Guarantor', guarantorSchema);

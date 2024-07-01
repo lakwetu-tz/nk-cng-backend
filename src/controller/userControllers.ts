@@ -57,7 +57,7 @@ export const register = async (req: Request, res: Response) => {
         await newUser.save();
         await sendOTP(phone, otp);
 
-        res.status(201).json({ status: 200, message: 'User registered successfully' });
+        res.status(201).json({ status: 'Ok', message: 'User registered successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
@@ -182,6 +182,53 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 }
 
+export const updateUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const { name, email, phone, address, city, state, country, zipcode } = req.body;
+
+        const user = await userModel.findByIdAndUpdate(userId, {
+            name,
+            email,
+            phone,
+            address,
+            city,
+            state,
+            country,
+            zipcode
+        }, { new: true });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ user });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export const deleteUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.id;
+        console.log(userId);
+
+        const user = await userModel.findByIdAndDelete(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        console.log(user._id);
+
+        res.status(200).json({ message: 'User deleted successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+            
+
 export const handleProfileImageUpload = async (req: Request, res: Response) => {
     try {
         const userId = req.params.userId;
@@ -224,6 +271,7 @@ export const handleResetPassword = async (req: Request, res: Response) => {
         user.password = hashedPassword;
         await user.save();
 
+
         // Send the new password via SMS
         const result = await sms.send({
             to: [phone],
@@ -237,5 +285,4 @@ export const handleResetPassword = async (req: Request, res: Response) => {
         console.error(error);
         res.status(500).json({ status: 'error', message: 'Internal server error' });
     }
-
-};
+}

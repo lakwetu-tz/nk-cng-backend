@@ -12,50 +12,88 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteGuarantor = exports.updateGuarantor = exports.getGuarantorById = exports.getGuarantors = exports.createGuarantor = exports.upload = void 0;
+exports.deleteAllGuarantors = exports.deleteManyGuarantors = exports.deleteGuarantor = exports.updateGuarantor = exports.getGuarantorById = exports.getGuarantors = exports.handleUploads = exports.createOrUpdateGuarantors = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const guarantorModel_1 = __importDefault(require("../model/guarantorModel"));
-const multer_1 = __importDefault(require("multer"));
-// Configure multer storage
-const storage = multer_1.default.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-// Multer middleware
-exports.upload = (0, multer_1.default)({ storage });
-// Create a new guarantor
-const createGuarantor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const guarantorModel_1 = __importDefault(require("../model/guarantorModel")); // Import GuarantorDocument if defined
+const formModel_1 = __importDefault(require("../model/formModel"));
+// Create or update guarantors
+const createOrUpdateGuarantors = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { firstName, lastName, email, phone } = req.body;
-        const files = req.files;
-        if (!files || !files['nationalIdFront'] || !files['nationalIdBack'] || !files['letterFile']) {
-            return res.status(400).json({ message: 'Missing required files' });
+        const { formId, guarantors } = req.body;
+        if (!formId || !guarantors.length) {
+            return res.status(400).json({ message: 'Invalid request body' });
         }
-        const nationalIdFront = files['nationalIdFront'][0];
-        const nationalIdBack = files['nationalIdBack'][0];
-        const letterFile = files['letterFile'][0];
-        const guarantor = new guarantorModel_1.default({
-            firstName,
-            lastName,
-            email,
-            phone,
-            nationalIdFrontPath: nationalIdFront.path,
-            nationalIdBackPath: nationalIdBack.path,
-            letterFilePath: letterFile.path,
-        });
-        yield guarantor.save();
-        res.status(201).json(guarantor);
+        // Find the form by ID
+        const form = yield formModel_1.default.findById(formId);
+        if (!form) {
+            return res.status(404).json({ message: 'Form not found' });
+        }
+        // Check for a maximum of 3 guarantors
+        if (guarantors.length > 3) {
+            return res.status(400).json({ message: 'Maximum of 3 guarantors allowed' });
+        }
+        const existingGuarantor = yield guarantorModel_1.default.findOne({ form: formId });
+        // Create or update guarantors
+        //     
+        res.status(200).json({ message: 'Guarantors updated successfully' });
     }
     catch (error) {
-        console.error('Error creating guarantor:', error);
+        console.error('Error creating or updating guarantors:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-exports.createGuarantor = createGuarantor;
+exports.createOrUpdateGuarantors = createOrUpdateGuarantors;
+const handleUploads = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // {
+    //     "formId": "667fb0c48ac9fd25a97c9e11",
+    //     "uploads": [
+    //         {
+    //             "nationalIdFront": "path/to/Jack_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/Jack_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/Jack_letter.jpeg",
+    //         },
+    //         {
+    //             "nationalIdFront": "path/to/John_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/John_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/John_letter.jpeg",
+    //         },
+    //         {
+    //             "nationalIdFront": "path/to/Enock_nationalIdFrontView.jpeg",
+    //             "nationalIdBack": "path/to/Enock_nationalIdBackView.jpeg",
+    //             "letterPdf": "path/to/Enock_letter.jpeg",
+    //         }
+    //     ]
+    // }
+    try {
+        const { formId, uploads } = req.body;
+        const form = yield guarantorModel_1.default.findOne({ form: formId });
+        if (!form) {
+            return res.status(404).json({ message: "Form not found!" });
+        }
+        // make sure we have the same number of uploads as guarantors
+        const guarantors = yield form.guarantors;
+        if (guarantors.length !== req.body.uploads.length) {
+            return res.status(400).json({ message: 'Number of uploads does not match number of guarantors' });
+        }
+        // handle the reset of logic to update files on each guarantors
+        // Update each guarantor with the respective file paths
+        // form.guarantors = form.guarantors.map((guarantor, index) => ({
+        //     ...guarantor,
+        //     files: {
+        //         national_id_front: uploads[index].nationalIdFront,
+        //         national_id_back: uploads[index].nationalIdBack,
+        //         letter_pdf: uploads[index].letterPdf,
+        //     }
+        // }));
+        yield form.save();
+        res.status(200).json({ status: "Ok", message: 'Uploads successfully saved', });
+    }
+    catch (error) {
+        console.error('Error handling uploads:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.handleUploads = handleUploads;
 // Get all guarantors
 const getGuarantors = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -126,3 +164,31 @@ const deleteGuarantor = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.deleteGuarantor = deleteGuarantor;
+// handle delete multiple guarantors
+const deleteManyGuarantors = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { ids } = req.body;
+        if (!ids) {
+            return res.status(400).json({ message: 'Invalid ID' });
+        }
+        const guarantors = yield guarantorModel_1.default.deleteMany({ _id: { $in: ids } });
+        res.status(200).json({ message: 'Guarantors deleted successfully' });
+    }
+    catch (error) {
+        console.error('Error deleting guarantors:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.deleteManyGuarantors = deleteManyGuarantors;
+// handle delete all guarantors
+const deleteAllGuarantors = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const guarantors = yield guarantorModel_1.default.deleteMany({});
+        res.status(200).json({ message: 'Guarantors deleted successfully' });
+    }
+    catch (error) {
+        console.error('Error deleting guarantors:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.deleteAllGuarantors = deleteAllGuarantors;

@@ -23,11 +23,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsers = exports.getUserById = exports.login = exports.resendOtp = exports.verify = exports.register = void 0;
+exports.handleResetPassword = exports.handleProfileImageUpload = exports.deleteUser = exports.updateUser = exports.getUsers = exports.getUserById = exports.login = exports.resendOtp = exports.verify = exports.register = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = __importDefault(require("../model/userModel"));
 const jwtUtils_1 = require("../utils/jwtUtils");
+const generatePassword_1 = require("../utils/generatePassword");
 const africastalking_1 = __importDefault(require("africastalking"));
 const africasTalking = (0, africastalking_1.default)({
     apiKey: "8ee049d80e558be1680fddf90fd4683e016d9ef98be04fbbc6e2e6f41f869cee",
@@ -71,7 +72,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const newUser = new userModel_1.default({ name, password: hashedPassword, phone, otp, otpExpiresAt });
         yield newUser.save();
         yield sendOTP(phone, otp);
-        res.status(201).json({ status: 200, message: 'User registered successfully' });
+        res.status(201).json({ status: 'Ok', message: 'User registered successfully' });
     }
     catch (error) {
         console.error(error);
@@ -178,3 +179,95 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
+const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.params.userId;
+        const { name, email, phone, address, city, state, country, zipcode } = req.body;
+        const user = yield userModel_1.default.findByIdAndUpdate(userId, {
+            name,
+            email,
+            phone,
+            address,
+            city,
+            state,
+            country,
+            zipcode
+        }, { new: true });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.updateUser = updateUser;
+const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.params.id;
+        console.log(userId);
+        const user = yield userModel_1.default.findByIdAndDelete(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        console.log(user._id);
+        res.status(200).json({ message: 'User deleted successfully' });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.deleteUser = deleteUser;
+const handleProfileImageUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.params.userId;
+        const imageUrl = req.body.imageUrl;
+        // check if user exist 
+        const user = userModel_1.default.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        // save image to the database
+        // user.profile_picture = imageUrl;
+        // await user.save();
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.handleProfileImageUpload = handleProfileImageUpload;
+const handleResetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { phone } = req.body;
+    try {
+        // Validate phone number format here if needed
+        if (!phone) {
+            return res.status(400).json({ status: 'error', message: 'Phone number is required' });
+        }
+        // Find the user by phone number
+        const user = yield userModel_1.default.findOne({ phone });
+        if (!user) {
+            return res.status(404).json({ status: 'error', message: 'User not found' });
+        }
+        // Generate a new password
+        const newPassword = (0, generatePassword_1.generatePassword)();
+        const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
+        user.password = hashedPassword;
+        yield user.save();
+        // Send the new password via SMS
+        const result = yield sms.send({
+            to: [phone],
+            message: `Your new password is ${newPassword}`,
+            from: ''
+        });
+        res.status(200).json({ status: 'Ok', message: 'Password reset successfully', result });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+});
+exports.handleResetPassword = handleResetPassword;

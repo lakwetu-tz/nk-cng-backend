@@ -1,5 +1,5 @@
 import express from 'express';
-import {register, login, getUsers, verify, resendOtp, handleResetPassword} from '../controller/userControllers';
+import {register, login, getUsers, verify, resendOtp, handleResetPassword, deleteUser, updateUser} from '../controller/userControllers';
 import authenticate from '../middlewares/authenticate';
 
 const router = express.Router();
@@ -14,5 +14,9 @@ router.get('/logout', authenticate, (req, res) => {
 });
 router.get('/users', getUsers);
 router.post('/reset-password', handleResetPassword)
+
+router.delete('/delete/:id', deleteUser);
+router.put('/update/:id', updateUser);
+
 
 export default router;

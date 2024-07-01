@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const morgan_1 = __importDefault(require("morgan"));
-const multer_1 = __importDefault(require("multer"));
 const cors_1 = __importDefault(require("cors"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = __importDefault(require("socket.io"));
@@ -37,21 +36,13 @@ const io = new socket_io_1.default.Server(server, {
     },
 });
 app.set("io", io);
-// Healthcheck endpoint
-app.get('/', (req, res) => {
-    res.status(200).send({ status: 'ok' });
-});
-// Multer setup for file uploads
-const storage = multer_1.default.memoryStorage();
-const upload = (0, multer_1.default)({ storage });
-// sms features
 //routes 
 app.use('/api/v1/user', userRoute_1.default);
 app.use('/api/v1/superuser', superuserRoute_1.default);
 app.use('/api/v1/loan', loanRoute_1.default);
 // app.use('/api/v1/sms', smsRoute);
 app.use('/api/v1/form', formRoute_1.default);
-app.use('/api/v1/form', guarantorRoute_1.default);
+app.use('/api/v1/guarantor', guarantorRoute_1.default);
 app.use('/api/v1/vehicle', vehicleRoute_1.default);
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -70,7 +61,7 @@ mongoose_1.default.connect(process.env.MONGO_URI || "", {
     serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
 })
     .then(() => {
-    app.listen(4000, "0.0.0.0", () => {
+    app.listen(4000, () => {
         console.log(`Server running on port ${port}`);
     });
 })
