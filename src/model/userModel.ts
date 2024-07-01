@@ -4,11 +4,12 @@ const UserSchema: Schema = new Schema({
     // auth staff
     email: {
         type: String,
-        unique: true,
         required: false,
-        lowercase: true, 
-        trim: true, 
+        // unique: true,
+        trim: true,
+        lowercase: true,
     },
+
     password: {
         type: String,
         required: true,

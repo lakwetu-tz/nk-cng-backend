@@ -40,6 +40,10 @@ export const register = async (req: Request, res: Response) => {
     try {
         const { name, password, phone } = req.body;
 
+        if (!name || !password || !phone) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
         // Check if the user already exists
         const existingUser = await userModel.findOne({ name });
         if (existingUser) {
