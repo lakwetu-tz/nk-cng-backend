@@ -59,6 +59,9 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 minutes
     try {
         const { name, password, phone } = req.body;
+        if (!name || !password || !phone) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
         // Check if the user already exists
         const existingUser = yield userModel_1.default.findOne({ name });
         if (existingUser) {

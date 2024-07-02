@@ -28,10 +28,10 @@ const UserSchema = new mongoose_1.Schema({
     // auth staff
     email: {
         type: String,
-        unique: true,
         required: false,
-        lowercase: true,
+        // unique: true,
         trim: true,
+        lowercase: true,
     },
     password: {
         type: String,
