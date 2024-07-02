@@ -6,6 +6,11 @@ const FormSchema: Schema = new Schema({
         ref: 'User',
         required: false
     },
+    form_ref: {
+        type: String,
+         required: false,
+         trim: true,
+    },
     // personal data
     first_name: {
         type: String,
@@ -31,6 +36,11 @@ const FormSchema: Schema = new Schema({
         type: String,
         require: false,
         trim: true
+    },
+    profile_picture: {
+        type: String,
+         required: false,
+         trim: true
     },
     address: {
         ward: {
@@ -96,6 +106,8 @@ const FormSchema: Schema = new Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    timestamps: true,
 })
 
 export default mongoose.model('Form', FormSchema)
