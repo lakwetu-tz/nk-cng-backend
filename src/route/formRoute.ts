@@ -10,7 +10,7 @@ router.post('/personal/upload',
         { name: 'frontId', maxCount: 1 },
         { name: 'backId', maxCount: 1 },
 ]), handleImageUpload)
-router.get('/getAll', getForms);
+router.get('/all', getForms);
 router.get('/getById/', getForm);
 router.delete('/delete/:id', handleFormDelete);
 // handle multiple delete
