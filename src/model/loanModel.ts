@@ -47,10 +47,7 @@ const LoanSchema: Schema = new Schema({
         default: 0,
         desc: "The allowed engine cc for the loan"
     }
-
-
 },
-
     {
         timestamps: true,
         versionKey: false
