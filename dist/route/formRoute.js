@@ -12,7 +12,7 @@ router.post('/personal/upload', storage_1.uploadMiddleware.fields([
     { name: 'frontId', maxCount: 1 },
     { name: 'backId', maxCount: 1 },
 ]), formController_1.handleImageUpload);
-router.get('/getAll', formController_1.getForms);
+router.get('/all', formController_1.getForms);
 router.get('/getById/', formController_1.getForm);
 router.delete('/delete/:id', formController_1.handleFormDelete);
 // handle multiple delete

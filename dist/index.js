@@ -18,6 +18,7 @@ const loanRoute_1 = __importDefault(require("./route/loanRoute"));
 const formRoute_1 = __importDefault(require("./route/formRoute"));
 const guarantorRoute_1 = __importDefault(require("./route/guarantorRoute"));
 const vehicleRoute_1 = __importDefault(require("./route/vehicleRoute"));
+const listerner_1 = require("./controller/listerner");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -36,18 +37,46 @@ const io = new socket_io_1.default.Server(server, {
     },
 });
 app.set("io", io);
-//routes
-app.use("/api/v1/user", userRoute_1.default);
-app.use("/api/v1/superuser", superuserRoute_1.default);
-app.use("/api/v1/loan", loanRoute_1.default);
+//routes 
+app.use('/v1/user', userRoute_1.default);
+app.use('/v1/superuser', superuserRoute_1.default);
+app.use('/v1/loan', loanRoute_1.default);
 // app.use('/api/v1/sms', smsRoute);
-app.use("/api/v1/form", formRoute_1.default);
-app.use("/api/v1/guarantor", guarantorRoute_1.default);
-app.use("/api/v1/vehicle", vehicleRoute_1.default);
+app.use('/v1/form', formRoute_1.default);
+app.use('/v1/guarantor', guarantorRoute_1.default);
+app.use('/v1/vehicle', vehicleRoute_1.default);
 // Error handling middleware
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    // open up socket
+    io.on('connection', (socket) => {
+        console.log('A user connected');
+        //collection of listeners
+        (0, listerner_1.listenActiveLoanRequests)(io, "active");
+        (0, listerner_1.listenDefaultLoans)(io, "default");
+        (0, listerner_1.listenDefaultRate)(io, "interest");
+        (0, listerner_1.listenTotalRevenueGenerated)(io, "revenue");
+        (0, listerner_1.listenLoansIssued)(io, "issue");
+        (0, listerner_1.listenOutstandingLoan)(io, "outstanding");
+        // Listen for disconnection
+        socket.on('disconnect', () => {
+            console.log('A user disconnected');
+        });
+    });
+    // Connect to MongoDB and start server
+    mongoose_1.default.connect(process.env.MONGO_URI || "", {
+        family: 4,
+        serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    })
+        .then(() => {
+        app.listen(4000, () => {
+            console.log(`Server running on port ${port}`);
+        });
+    })
+        .catch((error) => {
+        console.error('Error connecting to MongoDB:', error);
+    });
     res.status(statusCode).json({
         error: {
             status: statusCode,
