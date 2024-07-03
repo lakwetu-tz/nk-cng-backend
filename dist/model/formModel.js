@@ -30,6 +30,11 @@ const FormSchema = new mongoose_1.Schema({
         ref: 'User',
         required: false
     },
+    form_ref: {
+        type: String,
+        required: false,
+        trim: true,
+    },
     // personal data
     first_name: {
         type: String,
@@ -54,6 +59,11 @@ const FormSchema = new mongoose_1.Schema({
     national_id: {
         type: String,
         require: false,
+        trim: true
+    },
+    profile_picture: {
+        type: String,
+        required: false,
         trim: true
     },
     address: {
@@ -116,5 +126,7 @@ const FormSchema = new mongoose_1.Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    timestamps: true,
 });
 exports.default = mongoose_1.default.model('Form', FormSchema);
